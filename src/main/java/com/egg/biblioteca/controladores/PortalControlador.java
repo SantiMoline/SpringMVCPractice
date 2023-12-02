@@ -5,9 +5,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.egg.biblioteca.entidades.Usuario;
 import com.egg.biblioteca.excepciones.BibliotecaException;
@@ -35,9 +37,9 @@ public class PortalControlador {
 
     @PostMapping("/registro")
     public String registro(@RequestParam String nombre, @RequestParam String email, @RequestParam String password, 
-        String password2, ModelMap modelo) {
+        String password2, ModelMap modelo, MultipartFile archivo) {
         try {
-            usuarioService.registrar(nombre, email, password, password2);
+            usuarioService.registrar(nombre, email, password, password2, archivo);
             modelo.put("exito", "Usuario registrado correctamente!");
             return "index";
         } catch (BibliotecaException e) {
@@ -67,4 +69,32 @@ public class PortalControlador {
 
         return "inicio";
     }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')") //Para indicarle al método que sólo permita acceder al inicio si el usuario ya está logueado y tiene alguno de estos permisos.
+    @GetMapping("/perfil")
+    public String perfil(ModelMap modelo, HttpSession session) {
+        Usuario usuario = (Usuario) session.getAttribute("usuariosession");
+        modelo.put("usuario", usuario);
+
+        return "usuario_modificar";
+    }
+    
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')") //Para indicarle al método que sólo permita acceder al inicio si el usuario ya está logueado y tiene alguno de estos permisos.
+    @PostMapping("/perfil/{id}")
+    public String actualizar(MultipartFile archivo, @PathVariable String id, @RequestParam String nombre, @RequestParam String email, 
+            @RequestParam String password, @RequestParam String password2, ModelMap modelo) {
+                try {
+                    usuarioService.actualizar(id, nombre, email, password, password2, archivo);
+                    modelo.put("exito", "Usuario actualizado correctamente!");
+                    
+                    return "inicio";
+                } catch (BibliotecaException e) {
+                    modelo.put("error", e.getMessage());
+                    modelo.put("nombre", nombre);
+                    modelo.put("email", email);
+        
+                    return "usuario_modificar.html";
+                }
+            }
+
 }
