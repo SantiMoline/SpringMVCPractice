@@ -82,6 +82,28 @@ public class UsuarioServicio implements UserDetailsService{
         return usuarioRepositorio.getReferenceById(id);
     }
 
+    public List<Usuario> listarUsuarios() {
+        return usuarioRepositorio.findAll();
+    } 
+
+    @Transactional
+    public void cambiarRol(String id){
+        Optional<Usuario> respuesta = usuarioRepositorio.findById(id);
+    	
+    	if(respuesta.isPresent()) {
+    		
+    		Usuario usuario = respuesta.get();
+    		
+    		if(usuario.getRol().equals(Rol.USER)) {
+    			
+    		usuario.setRol(Rol.ADMIN);
+    		
+    		}else if(usuario.getRol().equals(Rol.ADMIN)) {
+    			usuario.setRol(Rol.USER);
+    		}
+    	}
+    }
+
     private void validar(String nombre, String email, String password, String password2) throws BibliotecaException {
         if(nombre == null || nombre.isBlank())
             throw new BibliotecaException("El nombre no puede ser nulo ni estar vacio.");
